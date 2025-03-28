@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Il Mio Flipbook</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            height: 100%;
+            overflow: hidden;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        header {
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+        #flipbook-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 8px 15px;
+            border-radius: 30px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+        }
+        .controls button {
+            background: white;
+            color: #333;
+            border: none;
+            padding: 8px 15px;
+            margin: 0 5px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+        .controls button:hover {
+            background: #f0f0f0;
+            transform: scale(1.05);
+        }
+        .page-number {
+            color: white;
+            margin: 0 10px;
+            font-size: 14px;
+        }
+        .fullscreen-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Il Mio Flipbook</h1>
+        </header>
+        <div id="flipbook-container">
+            <iframe id="pdf-viewer" src="pdfjs/web/viewer.html?file=../../pdfs/libro.pdf" allowfullscreen></iframe>
+            <div class="controls">
+                <button id="first-page">&#171;</button>
+                <button id="prev">&#8249;</button>
+                <span class="page-number">Pagina <span id="current-page">1</span> di <span id="total-pages">?</span></span>
+                <button id="next">&#8250;</button>
+                <button id="last-page">&#187;</button>
+            </div>
+            <button class="fullscreen-btn" id="fullscreen">Schermo intero</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const iframe = document.getElementById('pdf-viewer');
+            const prevBtn = document.getElementById('prev');
+            const nextBtn = document.getElementById('next');
+            const firstPageBtn = document.getElementById('first-page');
+            const lastPageBtn = document.getElementById('last-page');
+            const fullscreenBtn = document.getElementById('fullscreen');
+            const currentPageEl = document.getElementById('current-page');
+            const totalPagesEl = document.getElementById('total-pages');
+            
+            // Funzione per inviare messaggi all'iframe
+            function sendMessage(action, data = {}) {
+                iframe.contentWindow.postMessage({ action, ...data }, '*');
+            }
+            
+            // Controlli di navigazione
+            prevBtn.addEventListener('click', () => sendMessage('previousPage'));
+            nextBtn.addEventListener('click', () => sendMessage('nextPage'));
+            firstPageBtn.addEventListener('click', () => sendMessage('firstPage'));
+            lastPageBtn.addEventListener('click', () => sendMessage('lastPage'));
+            
+            // Schermo intero
+            fullscreenBtn.addEventListener('click', function() {
+                const container = document.getElementById('flipbook-container');
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                } else {
+                    container.requestFullscreen();
+                }
+            });
+            
+            // Aggiorna informazioni pagina
+            window.addEventListener('message', function(event) {
+                if (event.data.currentPage) {
+                    currentPageEl.textContent = event.data.currentPage;
+                }
+                if (event.data.totalPages) {
+                    totalPagesEl.textContent = event.data.totalPages;
+                }
+            });
+            
+            // Supporto per tastiera
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft') {
+                    sendMessage('previousPage');
+                } else if (e.key === 'ArrowRight') {
+                    sendMessage('nextPage');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
